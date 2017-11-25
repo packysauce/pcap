@@ -200,9 +200,19 @@ impl Device {
 
     /// Returns the default Device suitable for captures according to pcap_lookupdev,
     /// or an error from pcap.
+    #[cfg(not(target_os = "windows"))]
     pub fn lookup() -> Result<Device, Error> {
         with_errbuf(|err| unsafe {
             cstr_to_string(raw::pcap_lookupdev(err))
+                ?
+                .map(|name| Device::new(name, None))
+                .ok_or_else(|| Error::new(err))
+        })
+    }
+    #[cfg(target_os = "windows")]
+    pub fn lookup() -> Result<Device, Error> {
+        with_errbuf(|err| unsafe {
+            wstr_to_string(raw::pcap_lookupdev(err))
                 ?
                 .map(|name| Device::new(name, None))
                 .ok_or_else(|| Error::new(err))
@@ -825,6 +835,16 @@ fn cstr_to_string(ptr: *const libc::c_char) -> Result<Option<String>, Error> {
         None
     } else {
         Some(unsafe { CStr::from_ptr(ptr as _) }.to_str()?.to_owned())
+    };
+    Ok(string)
+}
+
+#[inline]
+fn wstr_to_string(ptr: *const libc::c_char) -> Result<Option<String>, Error> {
+    let string = if ptr.is_null() {
+        None
+    } else {
+        Some(unsafe { WideCString::from_ptr_str(ptr as _) }.to_string().unwrap())
     };
     Ok(string)
 }
