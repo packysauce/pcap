@@ -839,6 +839,7 @@ fn cstr_to_string(ptr: *const libc::c_char) -> Result<Option<String>, Error> {
     Ok(string)
 }
 
+#[cfg(target_os = "windows")]
 #[inline]
 fn wstr_to_string(ptr: *const libc::c_char) -> Result<Option<String>, Error> {
     let string = if ptr.is_null() {
