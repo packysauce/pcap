@@ -59,6 +59,8 @@ extern crate futures;
 extern crate tokio_core;
 #[cfg(target_os = "windows")]
 extern crate winapi;
+#[cfg(target_os = "windows")]
+extern crate widestring;
 
 use unique::Unique;
 
@@ -77,6 +79,9 @@ use std::io;
 use std::os::unix::io::{RawFd, AsRawFd};
 
 use self::Error::*;
+
+#[cfg(target_os = "windows")]
+use widestring::WideCString;
 
 mod raw;
 mod unique;
