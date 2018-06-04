@@ -103,6 +103,7 @@ pub enum Error {
     IoError(std::io::ErrorKind),
     #[cfg(not(windows))]
     InvalidRawFd,
+    PcapDumpFlushFailure
 }
 
 impl Error {
@@ -129,6 +130,7 @@ impl fmt::Display for Error {
             IoError(ref e) => write!(f, "io error occurred: {:?}", e),
             #[cfg(not(windows))]
             InvalidRawFd => write!(f, "invalid raw file descriptor provided"),
+            PcapDumpFlushFailure => write!(f, "pcap_dump_flush failed")
         }
     }
 }
@@ -148,6 +150,7 @@ impl std::error::Error for Error {
             IoError(..) => "io error occurred",
             #[cfg(not(windows))]
             InvalidRawFd => "invalid raw file descriptor provided",
+            PcapDumpFlushFailure => "pcap_dump_flush failed"
         }
     }
 
@@ -812,6 +815,16 @@ impl Savefile {
             raw::pcap_dump(*self.handle as _,
                            mem::transmute::<_, &raw::pcap_pkthdr>(packet.header),
                            packet.data.as_ptr());
+        }
+    }
+
+    pub fn flush(&mut self) -> Result<(), Error> {
+        unsafe {
+            if raw::pcap_dump_flush(*self.handle) == 0 {
+                Ok(())
+            } else {
+                Err(PcapDumpFlushFailure)
+            }
         }
     }
 }
