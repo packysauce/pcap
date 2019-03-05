@@ -64,3 +64,4 @@ path = "examples/getstatistics.rs"
 [[example]]
 name = "streamlisten"
 path = "examples/streamlisten.rs"
+required-features = ["stream"]
