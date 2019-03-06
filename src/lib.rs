@@ -186,8 +186,8 @@ pub struct Device {
 impl Device {
     fn new(name: String, desc: Option<String>) -> Device {
         Device {
-            name: name,
-            desc: desc,
+            name,
+            desc,
         }
     }
 
@@ -246,14 +246,14 @@ pub struct Linktype(pub i32);
 
 impl Linktype {
     /// Gets the name of the link type, such as EN10MB
-    pub fn get_name(&self) -> Result<String, Error> {
+    pub fn get_name(self) -> Result<String, Error> {
         cstr_to_string(unsafe { raw::pcap_datalink_val_to_name(self.0) })
             ?
             .ok_or(InvalidLinktype)
     }
 
     /// Gets the description of a link type.
-    pub fn get_description(&self) -> Result<String, Error> {
+    pub fn get_description(self) -> Result<String, Error> {
         cstr_to_string(unsafe { raw::pcap_datalink_val_to_description(self.0) })
             ?
             .ok_or(InvalidLinktype)
@@ -271,8 +271,8 @@ impl<'a> Packet<'a> {
     #[doc(hidden)]
     pub fn new(header: &'a PacketHeader, data: &'a [u8]) -> Packet<'a> {
         Packet {
-            header: header,
-            data: data,
+            header,
+            data,
         }
     }
 }
@@ -324,9 +324,9 @@ pub struct Stat {
 impl Stat {
     fn new(received: u32, dropped: u32, if_dropped: u32) -> Stat {
         Stat {
-            received: received,
-            dropped: dropped,
-            if_dropped: if_dropped,
+          received,
+          dropped,
+          if_dropped,
         }
     }
 }
@@ -654,8 +654,8 @@ impl<T: Activated + ? Sized> Capture<T> {
             match retcode {
                 i if i >= 1 => {
                     // packet was read without issue
-                    Ok(Packet::new(mem::transmute(&*header),
-                                   slice::from_raw_parts(packet, (&*header).caplen as _)))
+                    Ok(Packet::new(&*(&*header as *const raw::pcap_pkthdr as *const PacketHeader),
+                                   slice::from_raw_parts(packet, (*header).caplen as _)))
                 }
                 0 => {
                     // packets are being read from a live capture and the
@@ -793,7 +793,8 @@ impl Savefile {
     pub fn write(&mut self, packet: &Packet) {
         unsafe {
             raw::pcap_dump(*self.handle as _,
-                           mem::transmute::<_, &raw::pcap_pkthdr>(packet.header),
+                           &*(packet.header as *const PacketHeader as *const raw::pcap_pkthdr),
+                           //mem::transmute::<_, &raw::pcap_pkthdr>(packet.header),
                            packet.data.as_ptr());
         }
     }
