@@ -5,7 +5,6 @@ addons:
     packages: [libpcap0.8, libpcap0.8-dev]
 os:
   - linux
-  - windows
   - osx
 rust:
   - stable
