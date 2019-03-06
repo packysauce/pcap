@@ -8,7 +8,7 @@
 //! use `.open()` on a `Device`. You can obtain the "default" device using
 //! `Device::lookup()`, or you can obtain the device(s) you need via `Device::list()`.
 //!
-//! ```ignore
+//! ```no_run
 //! use pcap::Device;
 //!
 //! fn main() {
@@ -30,7 +30,7 @@
 //! proceed to configure the capture handle. When you're finished, run `.open()` on it to
 //! turn it into a `Capture<Active>`.
 //!
-//! ```ignore
+//! ```no_run
 //! use pcap::{Device,Capture};
 //!
 //! fn main() {
