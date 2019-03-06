@@ -3,20 +3,15 @@ sudo: false
 addons:
   apt:
     packages: [libpcap0.8, libpcap0.8-dev]
-matrix:
-  include:
-    - {os: linux, rust: stable,
-       env: FLAGS="--features tokio"}
-    - {os: linux, rust: beta,
-       env: FLAGS="--features tokio"}
-    - {os: linux, rust: nightly,
-       env: FLAGS="--features tokio"}
-    - {os: osx, rust: stable,
-       env: FLAGS="--features full" PCAP_LIBDIR=/usr/local/opt/libpcap/lib}
-    - {os: osx, rust: beta,
-       env: FLAGS="--features full" PCAP_LIBDIR=/usr/local/opt/libpcap/lib}
-    - {os: osx, rust: nightly,
-       env: FLAGS="--all-features" PCAP_LIBDIR=/usr/local/opt/libpcap/lib}
+os:
+  - linux
+  - windows
+  - osx
+rust:
+  - stable
+  - nightly
+env:
+  - FLAGS="--all-features"
 before_install:
   - if [ `uname` = "Darwin" ]; then
       brew update >/dev/null;
