@@ -12,6 +12,7 @@ rust:
   - nightly
 env:
   - FLAGS="--all-features"
+dist: xenial
 before_install:
   - if [ `uname` = "Darwin" ]; then
       brew update >/dev/null;
