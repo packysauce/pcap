@@ -23,3 +23,4 @@ script:
   - cargo build -v $FLAGS 
   - cargo test  -v $FLAGS
   - cargo doc --no-deps
+  - if [ -n "$CLIPPY" ]; then cargo clippy -v $FLAGS; fi
