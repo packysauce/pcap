@@ -4,11 +4,12 @@ addons:
   apt:
     packages: [libpcap0.8, libpcap0.8-dev]
 os:
-  - linux
-  - osx
+  - windows
+#  - linux
+#  - osx
 rust:
   - stable
-  - nightly
+#  - nightly
 env:
   - FLAGS="--all-features"
 dist: xenial
