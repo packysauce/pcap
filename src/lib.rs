@@ -53,6 +53,10 @@ extern crate mio;
 extern crate futures;
 #[cfg(feature = "stream")]
 extern crate tokio;
+#[cfg(target_os = "windows")]
+extern crate winapi;
+#[cfg(target_os = "windows")]
+extern crate widestring;
 
 use unique::Unique;
 
@@ -71,6 +75,9 @@ use std::io;
 use std::os::unix::io::{RawFd, AsRawFd};
 
 use self::Error::*;
+
+#[cfg(target_os = "windows")]
+use widestring::WideCString;
 
 mod raw;
 mod unique;
@@ -92,6 +99,7 @@ pub enum Error {
     IoError(std::io::ErrorKind),
     #[cfg(not(windows))]
     InvalidRawFd,
+    PcapDumpFlushFailure
 }
 
 impl Error {
@@ -118,6 +126,7 @@ impl fmt::Display for Error {
             IoError(ref e) => write!(f, "io error occurred: {:?}", e),
             #[cfg(not(windows))]
             InvalidRawFd => write!(f, "invalid raw file descriptor provided"),
+            PcapDumpFlushFailure => write!(f, "pcap_dump_flush failed")
         }
     }
 }
@@ -137,6 +146,7 @@ impl std::error::Error for Error {
             IoError(..) => "io error occurred",
             #[cfg(not(windows))]
             InvalidRawFd => "invalid raw file descriptor provided",
+            PcapDumpFlushFailure => "pcap_dump_flush failed"
         }
     }
 
@@ -194,9 +204,19 @@ impl Device {
 
     /// Returns the default Device suitable for captures according to pcap_lookupdev,
     /// or an error from pcap.
+    #[cfg(not(target_os = "windows"))]
     pub fn lookup() -> Result<Device, Error> {
         with_errbuf(|err| unsafe {
             cstr_to_string(raw::pcap_lookupdev(err))
+                ?
+                .map(|name| Device::new(name, None))
+                .ok_or_else(|| Error::new(err))
+        })
+    }
+    #[cfg(target_os = "windows")]
+    pub fn lookup() -> Result<Device, Error> {
+        with_errbuf(|err| unsafe {
+            wstr_to_string(raw::pcap_lookupdev(err))
                 ?
                 .map(|name| Device::new(name, None))
                 .ok_or_else(|| Error::new(err))
@@ -794,6 +814,16 @@ impl Savefile {
                            packet.data.as_ptr());
         }
     }
+
+    pub fn flush(&mut self) -> Result<(), Error> {
+        unsafe {
+            if raw::pcap_dump_flush(*self.handle) == 0 {
+                Ok(())
+            } else {
+                Err(PcapDumpFlushFailure)
+            }
+        }
+    }
 }
 
 impl Savefile {
@@ -820,6 +850,17 @@ fn cstr_to_string(ptr: *const libc::c_char) -> Result<Option<String>, Error> {
         None
     } else {
         Some(unsafe { CStr::from_ptr(ptr as _) }.to_str()?.to_owned())
+    };
+    Ok(string)
+}
+
+#[cfg(target_os = "windows")]
+#[inline]
+fn wstr_to_string(ptr: *const libc::c_char) -> Result<Option<String>, Error> {
+    let string = if ptr.is_null() {
+        None
+    } else {
+        Some(unsafe { WideCString::from_ptr_str(ptr as _) }.to_string().unwrap())
     };
     Ok(string)
 }

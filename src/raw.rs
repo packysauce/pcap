@@ -1,7 +1,11 @@
 #![allow(dead_code)]
 #![allow(non_camel_case_types)]
 
-use libc::{c_int, c_uint, c_char, c_uchar, c_ushort, sockaddr, timeval, FILE};
+use libc::{c_int, c_uint, c_char, c_uchar, c_ushort, timeval, FILE};
+#[cfg(target_os = "windows")]
+use winapi::ws2def::SOCKADDR as sockaddr;
+#[cfg(not(target_os = "windows"))]
+use libc::sockaddr;
 
 #[repr(C)]
 #[derive(Copy, Clone)]
@@ -162,7 +166,7 @@ extern "C" {
     pub fn pcap_dump_open_append(arg1: *mut pcap_t, arg2: *const c_char) -> *mut pcap_dumper_t;
     // pub fn pcap_dump_file(arg1: *mut pcap_dumper_t) -> *mut FILE;
     // pub fn pcap_dump_ftell(arg1: *mut pcap_dumper_t) -> c_long;
-    // pub fn pcap_dump_flush(arg1: *mut pcap_dumper_t) -> c_int;
+    pub fn pcap_dump_flush(arg1: *mut pcap_dumper_t) -> c_int;
     pub fn pcap_dump_close(arg1: *mut pcap_dumper_t) -> ();
     pub fn pcap_dump(arg1: *mut c_uchar, arg2: *const pcap_pkthdr, arg3: *const c_uchar) -> ();
     pub fn pcap_findalldevs(arg1: *mut *mut pcap_if_t, arg2: *mut c_char) -> c_int;
